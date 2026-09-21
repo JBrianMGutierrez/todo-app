@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+/* Catppuccin Mocha is the default, including before React mounts. */
+:root {
+  --ctp-base: #1e1e2e;
+  --ctp-mantle: #181825;
+  --ctp-crust: #11111b;
+  --ctp-surface0: #313244;
+  --ctp-surface1: #45475a;
+  --ctp-surface2: #585b70;
+  --ctp-subtext0: #a6adc8;
+  --ctp-subtext1: #bac2de;
+  --ctp-text: #cdd6f4;
+  --ctp-mauve: #cba6f7;
+  --ctp-green: #a6e3a1;
+  --ctp-red: #f38ba8;
+  --ctp-yellow: #f9e2af;
+  --ctp-peach: #fab387;
+  color-scheme: dark;
+  font-family: "Fira Code Variable", "Fira Code", ui-monospace, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--ctp-text);
+  background: var(--ctp-base);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="macchiato"] {
+  --ctp-base: #24273a;
+  --ctp-mantle: #1e2030;
+  --ctp-crust: #181926;
+  --ctp-surface0: #363a4f;
+  --ctp-surface1: #494d64;
+  --ctp-surface2: #5b6078;
+  --ctp-subtext0: #a5adcb;
+  --ctp-subtext1: #b8c0e0;
+  --ctp-text: #cad3f5;
+  --ctp-mauve: #c6a0f6;
+  --ctp-green: #a6da95;
+  --ctp-red: #ed8796;
+  --ctp-yellow: #eed49f;
+  --ctp-peach: #f5a97f;
+}
+
+:root[data-theme="frappe"] {
+  --ctp-base: #303446;
+  --ctp-mantle: #292c3c;
+  --ctp-crust: #232634;
+  --ctp-surface0: #414559;
+  --ctp-surface1: #51576d;
+  --ctp-surface2: #626880;
+  --ctp-subtext0: #a5adce;
+  --ctp-subtext1: #b5bfe2;
+  --ctp-text: #c6d0f5;
+  --ctp-mauve: #ca9ee6;
+  --ctp-green: #a6d189;
+  --ctp-red: #e78284;
+  --ctp-yellow: #e5c890;
+  --ctp-peach: #ef9f76;
+}
+
+:root[data-theme="latte"] {
+  --ctp-base: #eff1f5;
+  --ctp-mantle: #e6e9ef;
+  --ctp-crust: #dce0e8;
+  --ctp-surface0: #ccd0da;
+  --ctp-surface1: #bcc0cc;
+  --ctp-surface2: #acb0be;
+  --ctp-subtext0: #6c6f85;
+  --ctp-subtext1: #5c5f77;
+  --ctp-text: #4c4f69;
+  --ctp-mauve: #8839ef;
+  --ctp-green: #40a02b;
+  --ctp-red: #d20f39;
+  --ctp-yellow: #df8e1d;
+  --ctp-peach: #fe640b;
+  color-scheme: light;
+}
+
+/* Keep existing utility classes and opacity modifiers theme-aware. */
+@theme inline {
+  --font-sans: "Fira Code Variable", "Fira Code", ui-monospace, monospace;
+  --color-white: var(--ctp-text);
+  --color-zinc-950: var(--ctp-crust);
+  --color-zinc-900: var(--ctp-mantle);
+  --color-zinc-800: var(--ctp-surface0);
+  --color-zinc-700: var(--ctp-surface1);
+  --color-zinc-600: var(--ctp-surface2);
+  --color-zinc-500: var(--ctp-subtext0);
+  --color-zinc-400: var(--ctp-subtext0);
+  --color-zinc-300: var(--ctp-subtext1);
+  --color-zinc-200: var(--ctp-surface2);
+  --color-gray-400: var(--ctp-subtext0);
+  --color-blue-400: var(--ctp-mauve);
+  --color-blue-500: var(--ctp-mauve);
+  --color-blue-600: color-mix(in srgb, var(--ctp-mauve) 85%, var(--ctp-text));
+  --color-green-400: var(--ctp-green);
+  --color-green-500: var(--ctp-green);
+  --color-red-400: var(--ctp-red);
+  --color-red-500: var(--ctp-red);
+  --color-yellow-400: var(--ctp-yellow);
+  --color-yellow-500: var(--ctp-yellow);
+  --color-orange-500: var(--ctp-peach);
+  --radius-sm: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@layer base {
+  body { margin: 0; min-width: 320px; }
+  button, input, select, textarea { font: inherit; }
+  button:not(:disabled), select { cursor: pointer; }
+  button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid var(--ctp-mauve); outline-offset: 4px; }
+  input::placeholder, textarea::placeholder { color: var(--ctp-subtext0); opacity: 0.7; }
+  input[type="checkbox"] { accent-color: var(--ctp-mauve); }
+  ::selection { background: var(--ctp-mauve); color: var(--ctp-base); }
+  * { scrollbar-width: thin; scrollbar-color: var(--ctp-surface1) transparent; }
+  a { color: var(--ctp-mauve); text-decoration: none; }
+}
+
+.app-shell {
+  padding: 2.5rem 0 6rem;
+  background: radial-gradient(ellipse at top left, color-mix(in srgb, var(--ctp-mauve) 7%, transparent), transparent 55%);
+}
+
+.app-header {
+  max-width: 1280px;
+  margin: 0 auto 2.5rem;
+  padding: 0 1.5rem 1.75rem;
+  border-bottom: 1px solid var(--ctp-surface0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.app-eyebrow { color: var(--ctp-mauve); font-size: 0.7rem; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 0.5rem; }
+.app-title { font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 600; letter-spacing: -0.06em; }
+.app-title span { color: var(--ctp-mauve); }
+.app-subtitle { color: var(--ctp-subtext0); font-size: 0.8rem; margin-top: 0.5rem; }
+.theme-picker { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; background: var(--ctp-mantle); border: 1px solid var(--ctp-surface0); border-radius: 0.85rem; color: var(--ctp-mauve); }
+.theme-picker select { color: var(--ctp-text); background: var(--ctp-mantle); font-size: 0.8rem; padding-right: 0.4rem; }
+
+/* Pastel-filled actions need a dark foreground (a light one in Latte). */
+.bg-blue-500, .bg-red-500, .bg-green-500 { color: var(--ctp-base); font-weight: 600; }
+.rdp-root { --rdp-accent-color: var(--ctp-mauve); --rdp-accent-background-color: var(--ctp-surface0); }
+
+@layer components {
+  .task-card { border-radius: 1rem; gap: 1rem; box-shadow: 0 4px 16px rgb(0 0 0 / 4%); }
+  .task-card:hover:not(.border-yellow-500) { border-color: var(--ctp-surface2); }
+  .accordion-grid {
+    display: grid;
+    transition: grid-template-rows 500ms ease, opacity 500ms ease;
+  }
+  .accordion-open { grid-template-rows: 1fr; opacity: 1; }
+  .accordion-closed { grid-template-rows: 0fr; opacity: 0; }
+  .accordion-inner { overflow: hidden; }
+}
+
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+@media (max-width: 640px) {
+  .app-shell { padding-top: 1.5rem; }
+  .app-header { align-items: flex-start; flex-direction: column; padding-inline: 1rem; margin-bottom: 1.5rem; gap: 1rem; }
+  .task-card { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
