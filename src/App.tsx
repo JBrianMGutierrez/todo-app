@@ -50,6 +50,8 @@ function App() {
     scheduledDate: today,
     recurring: false,
     recurringDays: "",
+    hasDueDate: false,
+    dueDate: "",
   });
 
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -139,6 +141,8 @@ function App() {
       scheduledDate: form.scheduledDate || today,
       recurring: form.recurring,
       recurringDays: form.recurring ? Number(form.recurringDays) : undefined,
+      dueDate: form.hasDueDate && form.type === "expense" && (form.bill || form.recurring)
+        ? form.dueDate : undefined,
     };
 
     await insertTask(newTask);
@@ -179,7 +183,9 @@ function App() {
         amount: target.bill ? null : target.amount,
       };
 
-      await insertTask(nextTask);
+      if (!target.dueDate || nextTask.scheduledDate <= target.dueDate) {
+        await insertTask(nextTask);
+      }
     }
 
     setTimeout(finishTaskAnimation, 700, id);
@@ -205,6 +211,8 @@ function App() {
         recurringDays: form.recurringDays
           ? Number(form.recurringDays)
           : undefined,
+        dueDate: form.hasDueDate && form.type === "expense" && (form.bill || form.recurring)
+          ? form.dueDate : undefined,
       });
     } else {
       await addTask();
@@ -235,6 +243,8 @@ function App() {
       recurringDays: taskData.recurringDays
         ? taskData.recurringDays.toString()
         : "",
+      hasDueDate: Boolean(taskData.dueDate),
+      dueDate: taskData.dueDate || "",
     });
 
     setShowAddModal(true);
@@ -249,6 +259,8 @@ function App() {
       scheduledDate: today,
       recurring: false,
       recurringDays: "",
+      hasDueDate: false,
+      dueDate: "",
     });
     setEditingTask(null);
   }

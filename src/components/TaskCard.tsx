@@ -13,15 +13,18 @@ type TaskCardProps = {
 
 export default function TaskCard({ task, toggleTask, setDeleteTargetId, openEditModal, animating = false }: Readonly<TaskCardProps>) {
   const needsAmount = task.bill && (!task.amount || task.amount <= 0);
+  const contentOpacity = task.completed || animating ? "opacity-60" : "";
   return (
     <div
       className={`
         task-card
         border
-        p-4
-        flex
+        px-3 py-2
+        grid
+        grid-cols-[minmax(0,1fr)_auto]
         items-center
-        justify-between
+        gap-x-2
+        gap-y-1
         bg-zinc-900
         transition-all
         duration-700
@@ -36,10 +39,9 @@ export default function TaskCard({ task, toggleTask, setDeleteTargetId, openEdit
             : "opacity-100"
         }
       `}>
-      <div className="space-y-2 min-w-0 flex-1">
         <div
           className={`
-            relative
+            col-span-2 min-w-0 relative
             transition-opacity
             duration-500
             ${
@@ -48,7 +50,7 @@ export default function TaskCard({ task, toggleTask, setDeleteTargetId, openEdit
                 : ""
             }
           `}>
-          <div className="relative inline-block">
+          <div className="relative inline-block max-w-full align-top">
             <div className="font-medium text-base wrap-break-words">
               {task.title}
             </div>
@@ -70,7 +72,18 @@ export default function TaskCard({ task, toggleTask, setDeleteTargetId, openEdit
             />
           </div>
 
-          <div className="flex gap-2 flex-wrap text-sm text-gray-400">
+        </div>
+
+        {needsAmount && (
+          <div className={`col-span-2 flex flex-wrap gap-2 transition-opacity duration-500 ${contentOpacity}`}>
+            <span className="flex items-center gap-1 text-yellow-400 text-xs">
+              <AlertTriangle size={14} />
+              Amount Required
+            </span>
+          </div>
+        )}
+
+          <div className={`flex min-w-0 items-center gap-2 flex-wrap text-sm text-gray-400 wrap-anywhere transition-opacity duration-500 ${contentOpacity}`}>
             <span className="flex items-center gap-1">
               {task.type.toLocaleLowerCase() === "income" ? (
                 <TrendingUp size={14} className="text-green-400" />
@@ -79,12 +92,6 @@ export default function TaskCard({ task, toggleTask, setDeleteTargetId, openEdit
               )}
             </span>
 
-            {needsAmount && (
-              <span className="flex items-center gap-1 text-yellow-400 text-xs">
-                <AlertTriangle size={14} />
-                Amount Required
-              </span>
-            )}
 
             {task.amount !== null && (
               <span>
@@ -105,8 +112,6 @@ export default function TaskCard({ task, toggleTask, setDeleteTargetId, openEdit
               </div>
             )}
           </div>
-        </div>
-      </div>
 
       <div className="flex shrink-0 gap-2 opacity-100">
         <button
@@ -150,6 +155,12 @@ export default function TaskCard({ task, toggleTask, setDeleteTargetId, openEdit
           <Trash2 size={18} />
         </button>
       </div>
+
+      {task.dueDate && (
+        <div className={`col-span-2 text-sm text-gray-400 transition-opacity duration-500 ${contentOpacity}`}>
+          Due Date: {task.dueDate}
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,7 @@ pub struct Task {
     pub r#type: String,
     pub bill: bool,
     pub scheduled_date: Option<String>,
+    pub due_date: Option<String>,
     pub recurring: Option<bool>,
     pub recurring_days: Option<i64>,
 }
@@ -35,6 +36,7 @@ pub struct TaskInput {
     pub r#type: String,
     pub bill: bool,
     pub scheduled_date: Option<String>,
+    pub due_date: Option<String>,
     pub recurring: bool,
     pub recurring_days: Option<i64>,
 }
@@ -72,7 +74,14 @@ pub fn get_conn(app: &tauri::AppHandle) -> DbState {
     let path = app.path().app_data_dir().unwrap().join("todo.db");
 
     let conn = Connection::open(path).unwrap();
+    initialize_schema(&conn).expect("Failed to initialize task database");
 
+    DbState {
+        conn: Mutex::new(conn),
+    }
+}
+
+fn initialize_schema(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tasks (
             id TEXT PRIMARY KEY,
@@ -86,27 +95,77 @@ pub fn get_conn(app: &tauri::AppHandle) -> DbState {
             recurring_days INTEGER
         )",
         [],
-    )
-    .unwrap();
+    )?;
 
-    conn.execute(
-        "ALTER TABLE tasks
-        ADD COLUMN bill INTEGER NOT NULL DEFAULT 0",
-        [],
-    )
-    .ok();
-
-    DbState {
-        conn: Mutex::new(conn),
+    let columns = conn
+        .prepare("PRAGMA table_info(tasks)")?
+        .query_map([], |row| row.get::<_, String>(1))?
+        .collect::<Result<Vec<_>>>()?;
+    if !columns.iter().any(|column| column == "bill") {
+        conn.execute(
+            "ALTER TABLE tasks ADD COLUMN bill INTEGER NOT NULL DEFAULT 0",
+            [],
+        )?;
     }
+    if !columns.iter().any(|column| column == "due_date") {
+        conn.execute("ALTER TABLE tasks ADD COLUMN due_date TEXT", [])?;
+    }
+    Ok(())
+}
+
+fn parse_date(value: &str, field: &str) -> Result<NaiveDate, String> {
+    let bytes = value.as_bytes();
+    if bytes.len() != 10
+        || bytes.iter().enumerate().any(|(index, byte)| {
+            if index == 4 || index == 7 {
+                *byte != b'-'
+            } else {
+                !byte.is_ascii_digit()
+            }
+        })
+    {
+        return Err(format!("{field} must be a valid date in YYYY-MM-DD format"));
+    }
+    NaiveDate::parse_from_str(value, "%Y-%m-%d")
+        .map_err(|_| format!("{field} must be a valid date in YYYY-MM-DD format"))
+}
+
+fn validate_due_date(
+    task_type: &str,
+    bill: bool,
+    recurring: bool,
+    scheduled_date: Option<&str>,
+    due_date: Option<&str>,
+) -> Result<(), String> {
+    let Some(due_date) = due_date else {
+        return Ok(());
+    };
+    if task_type != "expense" || !(bill || recurring) {
+        return Err("Due date is only allowed for bill or recurring expenses".to_string());
+    }
+    let due = parse_date(due_date, "Due date")?;
+    if let Some(scheduled_date) = scheduled_date {
+        if due < parse_date(scheduled_date, "Scheduled date")? {
+            return Err("Due date must be on or after scheduled date".to_string());
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
 pub fn insert_task(state: tauri::State<DbState>, task: TaskInput) -> Result<(), String> {
-    println!("insert task called");
-    println!("{:?}", task);
-
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    insert_task_with_conn(&conn, task)
+}
+
+fn insert_task_with_conn(conn: &Connection, task: TaskInput) -> Result<(), String> {
+    validate_due_date(
+        &task.r#type,
+        task.bill,
+        task.recurring,
+        task.scheduled_date.as_deref(),
+        task.due_date.as_deref(),
+    )?;
 
     conn.execute(
         "
@@ -120,9 +179,10 @@ pub fn insert_task(state: tauri::State<DbState>, task: TaskInput) -> Result<(), 
             bill,
             scheduled_date,
             recurring,
-            recurring_days
+            recurring_days,
+            due_date
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
         ",
         (
             task.id,
@@ -135,6 +195,7 @@ pub fn insert_task(state: tauri::State<DbState>, task: TaskInput) -> Result<(), 
             task.scheduled_date,
             if task.recurring { 1 } else { 0 },
             task.recurring_days,
+            task.due_date,
         ),
     )
     .map_err(|e| e.to_string())?;
@@ -145,6 +206,15 @@ pub fn insert_task(state: tauri::State<DbState>, task: TaskInput) -> Result<(), 
 #[tauri::command]
 pub fn load_tasks(
     state: State<DbState>,
+    filter: Option<String>,
+    today: Option<String>,
+) -> Result<Vec<Task>, String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    load_tasks_with_conn(&conn, filter, today)
+}
+
+fn load_tasks_with_conn(
+    conn: &Connection,
     filter: Option<String>,
     today: Option<String>,
 ) -> Result<Vec<Task>, String> {
@@ -164,8 +234,6 @@ pub fn load_tasks(
         _ => return Err("Invalid task filter".to_string()),
     };
 
-    let conn = state.conn.lock().map_err(|e| e.to_string())?;
-
     let mut stmt = conn.prepare(query).map_err(|e| e.to_string())?;
 
     let rows = stmt
@@ -181,6 +249,7 @@ pub fn load_tasks(
                 recurring: row.get(7)?,
                 recurring_days: row.get(8)?,
                 bill: row.get(9)?,
+                due_date: row.get("due_date")?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -235,6 +304,17 @@ pub fn delete_task(state: State<DbState>, id: String) -> Result<(), String> {
 #[tauri::command]
 pub fn update_task(state: State<DbState>, task: Task) -> Result<(), String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    update_task_with_conn(&conn, task)
+}
+
+fn update_task_with_conn(conn: &Connection, task: Task) -> Result<(), String> {
+    validate_due_date(
+        &task.r#type,
+        task.bill,
+        task.recurring.unwrap_or(false),
+        task.scheduled_date.as_deref(),
+        task.due_date.as_deref(),
+    )?;
 
     conn.execute(
         "UPDATE tasks
@@ -245,7 +325,8 @@ pub fn update_task(state: State<DbState>, task: Task) -> Result<(), String> {
         bill = ?,
         scheduled_date = ?,
         recurring = ?,
-        recurring_days = ?
+        recurring_days = ?,
+        due_date = ?
         WHERE id = ?",
         (
             task.title,
@@ -255,6 +336,7 @@ pub fn update_task(state: State<DbState>, task: Task) -> Result<(), String> {
             task.scheduled_date,
             task.recurring,
             task.recurring_days,
+            task.due_date,
             task.id,
         ),
     )

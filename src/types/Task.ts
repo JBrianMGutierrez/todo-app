@@ -14,4 +14,5 @@ export type Task = {
   scheduledDate?: string;
   recurring?: boolean;
   recurringDays?: number;
+  dueDate?: string;
 };

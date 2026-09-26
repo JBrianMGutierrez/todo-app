@@ -26,6 +26,8 @@ type TaskFormState = {
   scheduledDate: string;
   recurring: boolean;
   recurringDays: string;
+  hasDueDate: boolean;
+  dueDate: string;
 };
 
 export default function TaskForm({
@@ -35,7 +37,11 @@ export default function TaskForm({
   setForm,
   formAction,
 }: Readonly<TaskModalProps>) {
-	const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [dateError, setDateError] = useState("");
+  const [dueDateCalendarOpen, setDueDateCalendarOpen] = useState(false);
+
+  const dueDateApplicable = form.type === "expense" && (form.bill || form.recurring);
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -51,9 +57,24 @@ export default function TaskForm({
         </h2>
         <div className="gap-2 mb-8">
           <form
+            id="task-form"
             className="space-y-6"
             onSubmit={(e) => {
               e.preventDefault();
+
+              if (dueDateApplicable && form.hasDueDate) {
+                if (!form.dueDate) {
+                  setDateError("Please select a due date.");
+                  return;
+                }
+
+                if (form.scheduledDate && form.dueDate < form.scheduledDate) {
+                  setDateError("Due date must be on or after the task date.");
+                  return;
+                }
+              }
+
+              setDateError("");
               formAction();
             }}>
             {/* TASK TITLE */}
@@ -90,6 +111,8 @@ export default function TaskForm({
                       setForm(prev => ({
                         ...prev,
                         type: e.target.value as TaskType,
+                        hasDueDate: e.target.value === "expense" && prev.hasDueDate,
+                        dueDate: e.target.value === "expense" ? prev.dueDate : "",
                       }))
                     }>
                     <option value="normal">Normal</option>
@@ -155,6 +178,11 @@ export default function TaskForm({
                           selected={
                             form.scheduledDate
                               ? new Date(form.scheduledDate)
+                              : undefined
+                          }
+                          disabled={
+                            form.scheduledDate
+                              ? { before: new Date(`${form.scheduledDate}T00:00:00`) }
                               : undefined
                           }
                           onSelect={(date) => {
@@ -251,6 +279,8 @@ export default function TaskForm({
                       setForm({
                         ...form,
                         bill: e.target.checked,
+                        hasDueDate: (e.target.checked || form.recurring) && form.hasDueDate,
+                        dueDate: e.target.checked || form.recurring ? form.dueDate : "",
                       })
                     }/>
 
@@ -278,6 +308,8 @@ export default function TaskForm({
                       setForm((prev) => ({
                         ...prev,
                         recurring: e.target.checked,
+                        hasDueDate: (e.target.checked || prev.bill) && prev.hasDueDate,
+                        dueDate: e.target.checked || prev.bill ? prev.dueDate : "",
                       }))
                     }
                     className="hidden"
@@ -285,19 +317,50 @@ export default function TaskForm({
 
                   <span className="text-sm">Recurring</span>
                 </label>
+                {/* Due Date */}
+                <label className={`flex items-center gap-2 ${
+                    !form.recurring
+                      ? "opacity-40 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}>
+                  <div
+                    className={`w-5 h-5 rounded border flex items-center justify-center transition
+                      ${
+                        form.hasDueDate
+                          ? "bg-blue-500 border-blue-500"
+                          : "bg-zinc-800 border-zinc-600"}`}>
+                    {form.hasDueDate && <Check size={14} className="text-white" />}
+                  </div>
+                <input
+                  type="checkbox"
+                  checked={form.hasDueDate}
+                  disabled={!form.recurring}
+                  required={form.hasDueDate}
+                  onChange={(e) => setForm((prev) => ({
+                    ...prev,
+                    hasDueDate: e.target.checked,
+                    dueDate: e.target.checked ? prev.dueDate : "",
+                  }))}
+                  className="hidden"
+                  />
+                  <span className="text-sm">Due Date</span>
+                </label>
               </div>
             </fieldset>
             <div className="space-y-1">
-              <label className="text-sm text-zinc-400" htmlFor="task">
-                Reccuring days
+              <label className="text-sm text-zinc-400" htmlFor="recurring-days">
+                Recurring days
               </label>
               <input
                 className="w-full border border-zinc-700 bg-zinc-900 p-2 rounded disabled:opacity-40 disabled:cursor-not-allowed"
                 type="number"
+                id="recurring-days"
+                min={1}
+                step={1}
                 placeholder="Every X days"
                 value={form.recurringDays}
                 disabled={!form.recurring}
-                required={!form.recurring}
+                required={form.recurring}
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
@@ -306,6 +369,84 @@ export default function TaskForm({
                 }
               />
             </div>
+            {dueDateApplicable && form.hasDueDate && (
+              <div className="w-full">
+                <Popover.Root
+                  open={dueDateCalendarOpen}
+                  onOpenChange={setDueDateCalendarOpen}>
+                  <Popover.Trigger asChild>
+                    <button
+                      type="button"
+                      className="
+                        w-full
+                        border
+                        border-zinc-700
+                        bg-zinc-900
+                        p-2
+                        rounded
+                        text-left
+                      "
+                    >
+                      <span className={!form.dueDate ? "text-red-400" : ""}>
+                        {form.dueDate || "Select Date!"}
+                      </span>
+                    </button>
+                  </Popover.Trigger>
+
+                  <Popover.Portal>
+                    <Popover.Content
+                      sideOffset={8}
+                      className="
+                        w-auto
+                        z-50
+                        rounded-xl
+                        border
+                        border-zinc-700
+                        bg-zinc-900
+                        p-3
+                        shadow-2xl
+                      "
+                    >
+                      <DayPicker
+                        mode="single"
+                        required
+                        classNames={{
+                          day: "h-8 w-8 text-xs",
+                          weekday: "text-xs",
+                          caption_label: "text-sm",
+                        }}
+                        selected={
+                          form.dueDate
+                            ? new Date(`${form.dueDate}T00:00:00`)
+                            : undefined
+                        }
+                        onSelect={(dueDate) => {
+                          if (!dueDate) return;
+
+                          const formattedDate =
+                            `${dueDate.getFullYear()}-${
+                              String(dueDate.getMonth() + 1).padStart(2, "0")
+                            }-${
+                              String(dueDate.getDate()).padStart(2, "0")
+                            }`;
+
+                          setForm((prev) => ({
+                            ...prev,
+                            dueDate: formattedDate,
+                          }));
+                          setDueDateCalendarOpen(false);
+                        }}
+                      />
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover.Root>
+                {dueDateApplicable && form.hasDueDate && dateError && (
+                  <p role="alert" className="text-sm text-red-400">
+                    {dateError}
+                  </p>
+                )}
+              </div>
+            )}
           </form>
         </div>
         <div className="flex justify-end gap-2 mt-6">
@@ -316,7 +457,8 @@ export default function TaskForm({
           </button>
 
           <button
-            onClick={formAction}
+            type="submit"
+            form="task-form"
             className="bg-blue-500 text-white px-4 py-2 rounded"
           >
             {editingTask ? "Save Changes" : "Add Task"}

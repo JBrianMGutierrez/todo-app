@@ -13,6 +13,7 @@ type Task = {
   scheduledDate?: string;
   recurring?: boolean;
   recurringDays?: number;
+  dueDate?: string;
 };
 
 export async function insertTask(task: Task) {
@@ -44,10 +45,11 @@ export async function loadTasks(
     scheduledDate: t.scheduledDate ?? undefined,
     recurring: t.recurring,
     recurringDays: t.recurringDays ?? undefined,
+    dueDate: t.dueDate ?? undefined,
   }));
 }
 
-export async function completeTask(id:string, isCompleted: boolean, today:string) {
+export async function completeTask(id: string, isCompleted: boolean, today: string) {
   await invoke("complete_task", {
     id,
     isCompleted,
