@@ -8,10 +8,13 @@ import {
 } from "./core/Database";
 import "@fontsource-variable/fira-code";
 import "./App.css";
-import ThemePicker from "./components/ThemePicker";
+import SettingsMenu from "./components/SettingsMenu";
+import TimezoneClock from "./components/TimezoneClock";
+import { useSettings } from "./core/useSettings";
 
 import { invoke } from "@tauri-apps/api/core";
 import { playDing } from "./utils/Sounds";
+import { addCalendarDays, philippinesToday } from "./utils/Dates";
 import type { Task, TaskType } from "./types/Task";
 import type { TaskFilter } from "./core/Database";
 
@@ -27,6 +30,7 @@ import FloatingButton from "./components/mobile/floating/SideBarRightButton";
 import AddTaskFloatingButton from "./components/mobile/floating/AddTaskButton";
 
 function App() {
+  const { theme, setTheme, timeZone, setTimeZone } = useSettings();
   const [animatingTasks, setAnimatingTasks] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
@@ -40,7 +44,7 @@ function App() {
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState<string | null>(null);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = philippinesToday();
 
   const [form, setForm] = useState({
     task: "",
@@ -118,11 +122,6 @@ function App() {
     setFilter(nextFilter);
   }
 
-  function addDays(dateStr: string, days: number) {
-    const date = new Date(dateStr);
-    date.setDate(date.getDate() + days);
-    return date.toISOString().split("T")[0];
-  }
 
   async function addTask() {
     if (form.task.trim() === "") return;
@@ -163,7 +162,7 @@ function App() {
       setAnimatingTasks((prev) => [...prev, id]);
     }
 
-    await completeTask(id, isNowCompleted, today);
+    await completeTask(id, isNowCompleted);
 
     // Only generate recurrence when completing task
     if (
@@ -178,7 +177,7 @@ function App() {
         id: crypto.randomUUID(),
         completed: false,
         completedAt: undefined,
-        scheduledDate: addDays(target.scheduledDate, target.recurringDays),
+        scheduledDate: addCalendarDays(target.scheduledDate, target.recurringDays),
         bill: target.bill ?? false,
         amount: target.bill ? null : target.amount,
       };
@@ -282,7 +281,15 @@ function App() {
           <h1 className="app-title">A little more done<span>.</span></h1>
           <p className="app-subtitle">Tasks, plans, and a little peace of mind.</p>
         </div>
-        <ThemePicker />
+        <div className="app-header-tools">
+          <TimezoneClock timeZone={timeZone} />
+          <SettingsMenu
+            theme={theme}
+            onThemeChange={setTheme}
+            timeZone={timeZone}
+            onTimeZoneChange={setTimeZone}
+          />
+        </div>
       </header>
       {/* MENU */}
       <div className="w-full max-w-7xl mx-auto flex gap-6 px-4 sm:px-6">

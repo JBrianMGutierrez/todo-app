@@ -3,6 +3,7 @@ import type { Task } from "../types/Task";
 import type { TaskFilter } from "../core/Database";
 import TaskCard from "./TaskCard";
 import EmptyStateCard from "./EmptyCard";
+import { philippinesToday } from "../utils/Dates";
 
 import { useScrollFade } from "../utils/ScrollFade/UseScrollFade";
 import ScrollFade from "../utils/ScrollFade/ScrollFade";
@@ -40,7 +41,7 @@ export default function TaskList({
     setDeleteTargetId,
     openEditModal,
 }: Readonly<TaskListProps>) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = philippinesToday();
   const filterItems: TaskFilter[] = ["all", "today", "pending", "completed", "income", "expense", "normal"];
 
   const [showToday, setShowToday] = useState(true);

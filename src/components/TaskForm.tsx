@@ -177,7 +177,7 @@ export default function TaskForm({
                           }}
                           selected={
                             form.scheduledDate
-                              ? new Date(form.scheduledDate)
+                              ? new Date(`${form.scheduledDate}T00:00:00`)
                               : undefined
                           }
                           disabled={

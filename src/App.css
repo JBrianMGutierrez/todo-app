@@ -139,6 +139,19 @@
   gap: 1.5rem;
 }
 
+.app-header-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 1rem; }
+.app-clock { display: flex; flex-direction: column; gap: 0.3rem; color: var(--ctp-subtext0); font-size: 0.75rem; }
+.app-clock-time { color: var(--ctp-text); font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.app-clock-zone { color: var(--ctp-mauve); font-size: 0.65rem; white-space: nowrap; }
+.settings-button { display: inline-flex; align-items: center; justify-content: center; min-width: 2.75rem; min-height: 2.75rem; color: var(--ctp-mauve); background: var(--ctp-mantle); border: 1px solid var(--ctp-surface0); border-radius: 0.85rem; }
+.settings-button:hover { background: var(--ctp-surface0); }
+.settings-dialog { margin: auto; padding: 0; width: min(30rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; color: var(--ctp-text); background: var(--ctp-base); border: 1px solid var(--ctp-surface0); border-radius: 1rem; box-shadow: 0 1rem 3rem rgb(0 0 0 / 30%); }
+.settings-dialog::backdrop { background: rgb(0 0 0 / 60%); }
+.settings-content { padding: 1.5rem; }
+.settings-description { color: var(--ctp-subtext0); font-size: 0.8rem; line-height: 1.6; margin-bottom: 0.75rem; }
+.settings-select { width: 100%; color: var(--ctp-text); background: var(--ctp-mantle); border: 1px solid var(--ctp-surface0); border-radius: 0.6rem; padding: 0.6rem 0.8rem; font-size: 0.85rem; }
+.settings-button:focus-visible, .settings-select:focus-visible { outline: 2px solid var(--ctp-mauve); outline-offset: 3px; }
+
 .app-eyebrow { color: var(--ctp-mauve); font-size: 0.7rem; letter-spacing: 0.2em; font-weight: 600; margin-bottom: 0.5rem; }
 .app-title { font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 600; letter-spacing: -0.06em; }
 .app-title span { color: var(--ctp-mauve); }
@@ -168,6 +181,7 @@
 @media (max-width: 640px) {
   .app-shell { padding-top: 1.5rem; }
   .app-header { align-items: flex-start; flex-direction: column; padding-inline: 1rem; margin-bottom: 1.5rem; gap: 1rem; }
+  .app-header-tools { justify-content: flex-start; }
   .task-card { flex-wrap: wrap; }
 }
 

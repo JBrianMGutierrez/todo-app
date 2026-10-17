@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { philippinesToday } from '../utils/Dates';
 import { DashboardStats, MonthGroup } from '../utils/Map';
 
 
@@ -31,7 +32,7 @@ export type TaskFilter =
 
 export async function loadTasks(
   filter: TaskFilter = "all",
-  today: string = new Date().toISOString().split("T")[0],
+  today: string = philippinesToday(),
 ) {
   const result = await invoke<any[]>("load_tasks", { filter, today });
   return result.map((t) => ({
@@ -49,11 +50,10 @@ export async function loadTasks(
   }));
 }
 
-export async function completeTask(id: string, isCompleted: boolean, today: string) {
+export async function completeTask(id: string, isCompleted: boolean) {
   await invoke("complete_task", {
     id,
-    isCompleted,
-    today
+    isCompleted
   });
 }
 
@@ -69,6 +69,9 @@ export async function getDashboardStats() {
     return await invoke<DashboardStats>("get_dashboard_stats");
 }
 
-export async function getGroupTransactions() {
-  return await invoke<MonthGroup[]>("get_grouped_transactions")
+export async function getGroupTransactions(months: number = 2) {
+  return await invoke<{ months: MonthGroup[]; hasMore: boolean }>(
+    "get_grouped_transactions",
+    { months },
+  );
 }
